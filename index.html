@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meashra Agent Verifier</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--ink:#14181f;--mute:#5a6472;--line:#dde1e7;--ok:#0b7a4b;--okbg:#e5f5ec;--warn:#8a5a00;--warnbg:#fff3d9;--bad:#b3261e;--badbg:#fde8e6;--info:#2b4a7a;--infobg:#e8eef8;--accent:#0f5fd7}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1116;--card:#171b22;--ink:#e8ebf0;--mute:#97a1ae;--line:#2a313c;--ok:#5fd39b;--okbg:#10291e;--warn:#f0c060;--warnbg:#2c2410;--bad:#ff8f86;--badbg:#321513;--info:#9ab9ee;--infobg:#16233a;--accent:#7fb0ff}}
+:root[data-theme="dark"]{--bg:#0e1116;--card:#171b22;--ink:#e8ebf0;--mute:#97a1ae;--line:#2a313c;--ok:#5fd39b;--okbg:#10291e;--warn:#f0c060;--warnbg:#2c2410;--bad:#ff8f86;--badbg:#321513;--info:#9ab9ee;--infobg:#16233a;--accent:#7fb0ff}
+*{box-sizing:border-box}
+body{overflow-wrap:anywhere;margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.5rem;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin:12px 0}
+label{display:block;font-weight:600;margin:12px 0 4px}
+input,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:14px ui-monospace,SFMono-Regular,Menlo,monospace}
+textarea{min-height:70px}
+.hint{color:var(--mute);font-size:.875rem;margin:4px 0 0}
+button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:10px 18px;font-weight:600;font-size:1rem;cursor:pointer}
+button.sec{background:transparent;color:var(--accent);border:1px solid var(--line)}
+button:disabled{opacity:.6;cursor:wait}
+details{margin-top:12px}summary{cursor:pointer;color:var(--accent);font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:700;font-size:.8125rem;letter-spacing:.02em}
+.OK{background:var(--okbg);color:var(--ok)}.WARN{background:var(--warnbg);color:var(--warn)}.BAD{background:var(--badbg);color:var(--bad)}.INFO{background:var(--infobg);color:var(--info)}
+.head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.head h2{font-size:1rem;margin:0}
+ul.l{list-style:none;margin:8px 0 0;padding:0}
+ul.l li{padding:4px 0;font-size:.9375rem;overflow-wrap:anywhere}
+ul.l li .pill{margin-right:8px;font-size:.6875rem;vertical-align:1px}
+a{color:var(--accent);overflow-wrap:anywhere}
+.big{font-size:1.25rem;font-weight:800}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8125rem;overflow-wrap:anywhere;color:var(--mute)}
+.ev{border-top:1px solid var(--line);padding:8px 0}
+.ev:first-child{border-top:0}
+footer{color:var(--mute);font-size:.875rem;margin-top:24px}
+#err{color:var(--bad);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>Meashra Agent Verifier</h1>
+<p class="sub">Check an agent identity directly against the public registry. This page talks only to the RPC endpoint you choose. It calls no Meashra server, uses no account and no key of ours.</p>
+
+<div class="card">
+  <label for="did">Agent DID</label>
+  <input id="did" placeholder="did:nhim:11155111:0x…" autocomplete="off" spellcheck="false">
+  <label for="rpc">Sepolia RPC URL</label>
+  <input id="rpc" autocomplete="off" spellcheck="false">
+  <p class="hint">Any Sepolia RPC works. The default is a free public endpoint run by a third party. For extra assurance, run it again with a different provider and compare.</p>
+  <details>
+    <summary>Optional checks</summary>
+    <label for="doc">DID document the agent presented</label>
+    <textarea id="doc" spellcheck="false" placeholder="Paste the JSON the agent gave you. It is compared with the document on-chain."></textarea>
+    <label for="chal">Challenge for key control</label>
+    <textarea id="chal" spellcheck="false"></textarea>
+    <div class="row"><button class="sec" id="mk" type="button">New challenge</button></div>
+    <p class="hint">Have the agent sign this exact text (EIP-191 personal sign), then paste the signature below.</p>
+    <label for="sig">Signature</label>
+    <input id="sig" autocomplete="off" spellcheck="false" placeholder="0x…">
+  </details>
+  <div class="row"><button id="go" type="button">Verify</button><span id="err" role="alert"></span></div>
+</div>
+
+<div id="out" aria-live="polite"></div>
+<footer>
+  Registry <span class="mono" id="regaddr"></span> on <span id="chain"></span>.
+  This shows what the registry says. It does not prove a registration was legitimate, and it trusts the RPC provider you use. Testnet only.
+</footer>
+</main>
+<script src="verifier.js"></script>
+<script>
+(function(){
+  var V = MeashraVerifier, $ = function(id){return document.getElementById(id)};
+  $("rpc").value = V.DEFAULT_PUBLIC_RPC;
+  $("regaddr").textContent = V.REGISTRY.address; $("chain").textContent = V.REGISTRY.chainName;
+  var q = new URLSearchParams(location.search); if (q.get("did")) $("did").value = q.get("did");
+  var HASH = /^0x[0-9a-fA-F]{64}$/;
+
+  function el(tag, cls, text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!==undefined) e.textContent=text; return e; }
+  function link(href, text){ var a=el("a",null,text); a.href=href; a.target="_blank"; a.rel="noopener noreferrer"; return a; }
+  function iso(t){ return new Date(t*1000).toISOString().replace(".000Z","Z"); }
+  function lines(ul, ls){ ls.forEach(function(l){ var li=el("li"); li.appendChild(el("span","pill "+l.level,l.level==="INFO"?"INFO":l.level==="OK"?"OK":l.level==="WARN"?"WARN":"BAD")); li.appendChild(document.createTextNode(l.text)); ul.appendChild(li); }); }
+  function cls(v){ return ({FOUND:"OK",ACTIVE:"OK",MATCH:"OK",PASS:"OK",VERIFIED:"OK","EXPECTED ISSUER":"OK",REVOKED:"WARN",EXPIRED:"WARN","NOT CHECKED":"INFO",UNKNOWN:"WARN"}[v])||"BAD"; }
+  function card(title, verdict, ls, extra, forceCls){
+    var c=el("div","card"), h=el("div","head"); h.appendChild(el("h2",null,title)); h.appendChild(el("span","pill "+(forceCls||cls(verdict)),verdict)); c.appendChild(h);
+    if(extra) c.appendChild(extra); var ul=el("ul","l"); lines(ul,ls); c.appendChild(ul); return c;
+  }
+
+  function render(r){
+    var out=$("out"); out.textContent="";
+    var top=el("div","card"); var h=el("div","head");
+    h.appendChild(el("div","big",r.overall.verdict)); h.appendChild(el("span","pill "+cls(r.overall.verdict),r.existence.verdict==="FOUND"?r.status.verdict:"NOT FOUND")); top.appendChild(h);
+    top.appendChild(el("p",null,r.overall.reasons.join("; ")));
+    top.appendChild(el("div","mono",r.did));
+    out.appendChild(top);
+    var ex=null;
+    out.appendChild(card("1. Existence", r.existence.verdict+(r.existence.issuer?" / "+r.existence.issuer:""), r.existence.lines, null, r.existence.verdict==="FOUND"&&r.existence.issuer==="EXPECTED ISSUER"?"OK":"BAD"));
+    if(r.existence.verdict!=="FOUND") return;
+    if(r.status.txUrl && HASH.test(r.status.txHash)){ ex=el("div","mono"); ex.appendChild(link(r.status.txUrl,"Evidence: transaction "+r.status.txHash.slice(0,12)+"…")); }
+    out.appendChild(card("2. Status", r.status.verdict, r.status.lines, ex));
+    out.appendChild(card("3. Claims integrity", r.claims.verdict, r.claims.lines));
+    out.appendChild(card("4. Control of key", r.key.verdict, r.key.lines));
+    var hc=el("div","card"), hh=el("div","head"); hh.appendChild(el("h2",null,"5. History")); hh.appendChild(el("span","pill INFO",r.history.length+(r.history.length===1?" event":" events"))); hc.appendChild(hh);
+    r.history.forEach(function(e){ var d=el("div","ev"); d.appendChild(el("strong",null,e.event)); d.appendChild(document.createTextNode("  "+iso(e.time)+"  block "+e.blockNumber));
+      d.appendChild(el("div",null,e.detail)); if(HASH.test(e.txHash)){ var m=el("div","mono"); m.appendChild(link(e.txUrl,e.txHash)); d.appendChild(m);} hc.appendChild(d); });
+    out.appendChild(hc);
+  }
+
+  $("mk").onclick=function(){ try{ var d=V.parseDid($("did").value); $("chal").value=V.makeChallenge($("did").value,V.REGISTRY.address); $("err").textContent=""; }catch(e){ $("err").textContent=e.message; } };
+  $("go").onclick=function(){
+    var btn=$("go"); btn.disabled=true; btn.textContent="Checking…"; $("err").textContent=""; $("out").textContent="";
+    var sig=$("sig").value.trim(), chal=$("chal").value.replace(/\r\n/g,"\n").replace(/\n$/,"");
+    V.run($("did").value, $("rpc").value.trim(), { presentedDocument:$("doc").value.trim()||undefined, challenge:(sig&&chal)?chal:undefined, signature:(sig&&chal)?sig:undefined })
+     .then(render).catch(function(e){ $("err").textContent=(e&&e.message)||String(e); })
+     .then(function(){ btn.disabled=false; btn.textContent="Verify"; });
+  };
+  if($("did").value) $("go").click();
+})();
+</script>
+</body>
+</html>
