@@ -16,7 +16,7 @@ Requires Node.js 18 or newer. No install step.
 node dist/cli.js did:nhim:11155111:0x78598717cd4e24cd41f18e449c46f4edace7b1ff --rpc <your Sepolia RPC URL>
 ```
 
-Without `--rpc` it uses a free public endpoint (`ethereum-sepolia-rpc.publicnode.com`) run by a third party.
+Without `--rpc` it uses a free public endpoint (`sepolia.gateway.tenderly.co`) run by a third party.
 Repeat `--rpc` with a second provider to cross-check: the tool reports whether they agree.
 
 ## Run it (browser)
@@ -55,8 +55,8 @@ Exit codes: 0 verified, 1 not verified or not found, 2 usage or RPC error.
 The platform wallet is the only registrar today, so it could register an agent that should not exist. Monitor mode does not prevent that. It makes it visible: it reads every registry event and lists every DID ever registered, with its owner, status and transaction links.
 
 ```
-node dist/cli.js --monitor --rpc https://ethereum-sepolia-rpc.publicnode.com
-node dist/cli.js --monitor --expected inventory.txt --rpc https://ethereum-sepolia-rpc.publicnode.com
+node dist/cli.js --monitor --rpc https://sepolia.gateway.tenderly.co
+node dist/cli.js --monitor --expected inventory.txt --rpc https://sepolia.gateway.tenderly.co
 ```
 
 `inventory.txt` is your own list of agents, one DID or address per line (`#` starts a comment). With it, the tool also reports agents that are active in the registry but not in your inventory, agents in your inventory that were never registered, and agents in your inventory that are revoked on-chain. Exit code 0 means no findings, 1 means review them. Repeat `--rpc` to cross-check providers. Without `--expected` it only flags registrations by owners that are not expected issuers.
