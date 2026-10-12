@@ -6,14 +6,14 @@ It works with every Meashra service switched off.
 
 - Registry: `0x57F1475b01E867F0E3E2bA1123c5c9F7021E548b` on Sepolia (testnet), deployed at block 11863194
 - Source verified on [Etherscan](https://sepolia.etherscan.io/address/0x57F1475b01E867F0E3E2bA1123c5c9F7021E548b#code)
-- Sample agent to try: `did:nhim:11155111:0x78598717cd4e24cd41f18e449c46f4edace7b1ff`
+- Sample agent to try: `did:nhim:11155111:0x240e3a14b00f2ab714c6f00b404fdd1f1914f680`
 
 ## Run it (command line)
 
 Requires Node.js 18 or newer. No install step.
 
 ```
-node dist/cli.js did:nhim:11155111:0x78598717cd4e24cd41f18e449c46f4edace7b1ff --rpc <your Sepolia RPC URL>
+node dist/cli.js did:nhim:11155111:0x240e3a14b00f2ab714c6f00b404fdd1f1914f680 --rpc <your Sepolia RPC URL>
 ```
 
 Without `--rpc` it uses a free public endpoint (`sepolia.gateway.tenderly.co`) run by a third party.
