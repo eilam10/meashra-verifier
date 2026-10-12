@@ -67,7 +67,7 @@ node dist/cli.js --monitor --expected inventory.txt --rpc https://sepolia.gatewa
 - It trusts the RPC provider. Cross-check with two providers.
 - Identity and revocation only. Access events are not anchored on-chain.
 - Sepolia testnet only.
-- Revocations made in the dashboard (standard revoke and Emergency revoke) are recorded on-chain by a revocation workflow, typically within a couple of minutes of the click. Until the transaction confirms, the verifier will still show the agent as ACTIVE; run it again after the `DIDRevoked` event appears.
+- Revocations made in the dashboard (standard revoke and Emergency revoke) are recorded on-chain by a revocation workflow, typically within seconds of the clickof the click. Until the transaction confirms, the verifier will still show the agent as ACTIVE; run it again after the `DIDRevoked` event appears.
 - Some free Sepolia RPC providers prune old logs or block crypto domains on some networks. If one fails, the verifier says so within 15 seconds; use another endpoint, and `--rpc` can be repeated to cross-check providers.
 - An expired DID could be revived on the old registry without any event. The tool flags any expiry in registry state that no logged event explains.
 
