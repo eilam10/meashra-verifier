@@ -117,7 +117,7 @@ footer{color:var(--mute);font-size:.875rem;margin-top:24px}
     var sig=$("sig").value.trim(), chal=$("chal").value.replace(/\r\n/g,"\n").replace(/\n$/,"");
     var did=$("did").value, rpc=$("rpc").value.trim();
     var opts={ presentedDocument:$("doc").value.trim()||undefined, challenge:(sig&&chal)?chal:undefined, signature:(sig&&chal)?sig:undefined };
-    var list=[rpc]; if(rpc===V.DEFAULT_PUBLIC_RPC) list.push("https://1rpc.io/sepolia");
+    var list=[rpc]; if(rpc===V.DEFAULT_PUBLIC_RPC) list.push("https://ethereum-sepolia-rpc.publicnode.com");
     (function attempt(i){ return V.run(did, list[i], opts).then(function(r){ $("rpc").value=list[i]; return render(r); }, function(e){ if(i+1<list.length && /RPC problem/i.test((e&&e.message)||"")) return attempt(i+1); throw e; }); })(0)
      .catch(function(e){ $("err").textContent=(e&&e.message)||String(e); })
      .then(function(){ btn.disabled=false; btn.textContent="Verify"; });
